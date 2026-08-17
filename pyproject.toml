@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "blopus"
+version = "0.3.4"
+description = "Official Python SDK for the Blopus web search + fetch API."
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+authors = [{ name = "Blopus" }]
+keywords = ["blopus", "search", "web-search", "fetch", "api", "sdk", "agents", "mcp"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Internet :: WWW/HTTP :: Indexing/Search",
+]
+dependencies = ["httpx>=0.23"]
+
+[project.urls]
+Homepage = "https://blopus.ai"
+Documentation = "https://blopus.ai/docs/"
+Source = "https://github.com/blopus-ai/blopus-python"
+
+[project.optional-dependencies]
+langchain = ["langchain-core>=0.1"]
+llamaindex = ["llama-index-core>=0.10"]
+crewai = ["crewai>=0.1"]
+dev = ["pytest>=7", "respx>=0.20"]
+
+[project.scripts]
+blopus = "blopus.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["blopus*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
