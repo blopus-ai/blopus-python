@@ -110,6 +110,7 @@ def build_search_body(
     include_excerpt: bool = False,
     excerpt_chars: Optional[int] = None,
     news_only: bool = False,
+    min_words: int | None = None,
     recency: Optional[str] = None,
     include_content: bool = False,
     content_chars: Optional[int] = None,
@@ -146,6 +147,11 @@ def build_search_body(
     if news_only:
         # only send it when true — an older gateway would 422 on an unknown field
         body["news_only"] = True
+    if min_words:
+        # Hard `word_count >= n` filter in the engine. About 10-17% of the index is
+        # under 120 words - tag listings, stubs, photo captions - and they rank on
+        # keywords without saying anything.
+        body["min_words"] = int(min_words)
     return body
 
 

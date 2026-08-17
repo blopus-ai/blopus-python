@@ -5,4 +5,4 @@ header, so a correct value here is what keeps Cloudflare from 1010-blocking
 requests as an unidentified library.
 """
 
-__version__ = "0.3.4"
+__version__ = "0.3.5"
