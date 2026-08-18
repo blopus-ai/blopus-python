@@ -85,6 +85,18 @@ class SearchResult:
 
 
 @dataclass
+class Topic:
+    """One entry in the topic vocabulary from ``Blopus.topics()``."""
+
+    topic: str = ""
+    documents: int = 0
+
+    @classmethod
+    def from_dict(cls, d: Dict[str, Any]) -> "Topic":
+        return cls(topic=d.get("topic") or "", documents=_as_int(d.get("documents")) or 0)
+
+
+@dataclass
 class SearchResponse:
     """Full response from ``POST /v1/search``. Iterable over its results."""
 

@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.5.0
+
+### Added
+- `topics` / `exclude_topics` on `search()` (sync, async, and CLI `--topics` /
+  `--exclude-topics`). Narrow to — or away from — whole subject areas.
+- `client.topics(min_docs=1000)` and CLI `blopus topics`, returning the vocabulary you may
+  pass. **Not billed.** Topics are matched exactly, so an unknown value returns zero results;
+  without a published vocabulary that is indistinguishable from a genuine no-match.
+- `Topic` model.
+
+### Note
+A topic describes what a **publication** covers, not what an individual article is about:
+`topics=["ai"]` means "pages from AI-focused sites", which is broader and coarser than
+"pages about AI". Use it to scope or de-noise a search, not as a substitute for the query.
+
+
 ## 0.4.0
 
 ### Added

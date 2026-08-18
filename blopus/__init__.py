@@ -35,6 +35,7 @@ from .models import (
     FetchResult,
     SearchResponse,
     SearchResult,
+    Topic,
 )
 
 __all__ = [
@@ -45,6 +46,7 @@ __all__ = [
     "print_mcp_config",
     # models
     "SearchResponse",
+    "Topic",
     "SearchResult",
     "FetchResult",
     "FetchFailure",

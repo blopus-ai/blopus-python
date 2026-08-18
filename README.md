@@ -8,6 +8,24 @@ The SDK talks to exactly two data-plane endpoints: `POST /v1/search` and
 `POST /v1/fetch` on `https://api.blopus.ai`.
 
 
+
+### Topic filters
+
+```python
+# what can I filter on?
+for t in client.topics(min_docs=100000)[:10]:
+    print(t.topic, t.documents)
+
+res = client.search("data breach", topics=["cybersecurity"])
+res = client.search("world cup", exclude_topics=["sports"])   # de-noise
+```
+
+`client.topics()` is free. Topics are matched **exactly**, so an unknown value returns zero
+results rather than silently widening the search — call `topics()` instead of guessing.
+
+A topic describes what a **publication** covers, not what an individual article is about:
+`topics=["ai"]` means "pages from AI-focused sites", which is broader than "pages about AI".
+
 ### Images
 
 Ask for a hero image URL per result:
