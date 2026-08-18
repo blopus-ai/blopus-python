@@ -347,8 +347,10 @@ def build_parser() -> argparse.ArgumentParser:
                         "off for breaking news, where a two-line wire story is a real answer.")
     s.add_argument("--topics", default=None, metavar="LIST",
                    help="Only results from publications covering these topics "
-                        "(comma-separated). Run `blopus topics` for valid values; an "
-                        "unknown topic matches nothing.")
+                        "(comma-separated). A topic is what a PUBLICATION covers, not what "
+                        "an article is about. Values are exact: an unknown topic returns "
+                        "NOTHING rather than widening the search. Run `blopus topics`, or "
+                        "browse https://blopus.ai/docs/topics")
     s.add_argument("--exclude-topics", default=None, metavar="LIST",
                    help="Drop results from publications covering these topics.")
     s.add_argument("--include-images", action="store_true",

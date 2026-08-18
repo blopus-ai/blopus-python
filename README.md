@@ -11,6 +11,9 @@ The SDK talks to exactly two data-plane endpoints: `POST /v1/search` and
 
 ### Topic filters
 
+> **[Full guide: TOPICS.md](TOPICS.md)** — what topic filtering does and does not do, measured. Browse the vocabulary at [blopus.ai/docs/topics](https://blopus.ai/docs/topics).
+
+
 ```python
 # what can I filter on?
 for t in client.topics(min_docs=100000)[:10]:
