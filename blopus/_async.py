@@ -19,7 +19,7 @@ import httpx
 
 from . import _common as C
 from .exceptions import APIConnectionError
-from .models import BatchFetchResponse, FetchFailure, FetchResult, SearchResponse
+from .models import BatchFetchResponse, FetchFailure, FetchResult, SearchResponse, Topic
 
 
 class AsyncBlopus:
@@ -78,6 +78,30 @@ class AsyncBlopus:
                 continue
             return C.parse_json_or_raise(status, resp.text, retry_after)
 
+    async def _get(self, path: str, params: dict) -> dict:
+        """GET with the same retry/typed-error contract as _post."""
+        attempt = 0
+        while True:
+            status = None
+            retry_after = None
+            try:
+                resp = await self._http.get(path, params=params)
+                status = resp.status_code
+                retry_after = C.parse_retry_after(resp.headers.get("Retry-After"))
+                if 200 <= status < 300:
+                    return C.parse_json_or_raise(status, resp.text, retry_after)
+            except httpx.HTTPError as exc:
+                if not C.should_retry(None, attempt, self.max_retries):
+                    raise APIConnectionError(f"Request failed: {exc}") from exc
+                await asyncio.sleep(C.backoff_seconds(attempt, None))
+                attempt += 1
+                continue
+            if C.should_retry(status, attempt, self.max_retries):
+                await asyncio.sleep(C.backoff_seconds(attempt, retry_after))
+                attempt += 1
+                continue
+            return C.parse_json_or_raise(status, resp.text, retry_after)
+
     async def search(
         self,
         query: str,
@@ -93,11 +117,26 @@ class AsyncBlopus:
         include_excerpt: bool = False,
         excerpt_chars: Optional[int] = None,
         news_only: bool = False,
+        min_words: Optional[int] = None,
+        include_images: bool = False,
         recency: Optional[str] = None,
         include_content: bool = False,
         content_chars: Optional[int] = None,
     ) -> SearchResponse:
         """Run a web search. Always costs 1 credit regardless of params.
+
+        Set ``min_words=120`` when you want something to READ - analysis, background,
+        a comparison. It drops tag listings and stub pages, which are keyword bait.
+        Leave it off for breaking news, where a two-line wire story is a real answer.
+
+        Set ``include_images=True`` to get a hero image URL on each result. It is off
+        by default because it costs roughly 295 tokens per 10 results, which matters
+        when the caller is a language model. Coverage is partial, so ``result.image``
+        is ``None`` on plenty of hits - check it before you use it, and never promise
+        a picture you do not already have a URL for.
+
+        Every result carries ``word_count`` whether or not you filter on it, so you
+        can tell a 40-word stub from a real article before reading it.
 
         Set ``news_only=True`` when the question is about events — what happened,
         who announced what, market reaction, election results, earnings news. It
@@ -123,11 +162,27 @@ class AsyncBlopus:
             include_excerpt=include_excerpt,
             excerpt_chars=excerpt_chars,
             news_only=news_only,
+            min_words=min_words,
+            include_images=include_images,
             recency=recency,
             include_content=include_content,
             content_chars=content_chars,
         )
         return SearchResponse.from_dict(await self._post("/v1/search", body))
+
+    async def topics(self, *, min_docs: int = 1000) -> List[Topic]:
+        """Valid values for the ``topics`` / ``exclude_topics`` search filters.
+
+        Free to call — it is not billed. Worth calling once at startup and caching:
+        topics are matched exactly, so an unknown value returns zero results, which is
+        indistinguishable from a genuine no-match unless you know the vocabulary.
+
+        A topic describes what a PUBLICATION covers, not what an individual article is
+        about: ``topics=["ai"]`` means "pages from AI-focused sites", which is broader
+        and coarser than "pages about AI".
+        """
+        d = await self._get("/v1/topics", {"min_docs": int(min_docs)})
+        return [Topic.from_dict(t) for t in (d.get("topics") or [])]
 
     async def fetch(
         self, url_or_urls: Union[str, Sequence[str]]

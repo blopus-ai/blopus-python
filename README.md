@@ -7,6 +7,54 @@ and agents.
 The SDK talks to exactly two data-plane endpoints: `POST /v1/search` and
 `POST /v1/fetch` on `https://api.blopus.ai`.
 
+
+
+### Topic filters
+
+> **[Full guide: TOPICS.md](TOPICS.md)** — what topic filtering does and does not do, measured. Browse the vocabulary at [blopus.ai/docs/topics](https://blopus.ai/docs/topics).
+
+
+```python
+# what can I filter on?
+for t in client.topics(min_docs=100000)[:10]:
+    print(t.topic, t.documents)
+
+res = client.search("data breach", topics=["cybersecurity"])
+res = client.search("world cup", exclude_topics=["sports"])   # de-noise
+```
+
+`client.topics()` is free. Topics are matched **exactly**, so an unknown value returns zero
+results rather than silently widening the search — call `topics()` instead of guessing.
+
+A topic describes what a **publication** covers, not what an individual article is about:
+`topics=["ai"]` means "pages from AI-focused sites", which is broader than "pages about AI".
+
+### Images
+
+Ask for a hero image URL per result:
+
+```python
+res = client.search("tesla factory", include_images=True)
+for r in res.results:
+    if r.image:                      # None is normal — coverage is partial
+        print(r.title, r.image, f"{r.image_w}x{r.image_h}")
+```
+
+Off by default because it costs roughly 295 tokens per 10 results. Never promise a user a
+picture before you have a non-null URL in hand.
+
+### Filtering out stubs
+
+Every result carries `word_count`, so you can see that a hit is a stub before reading it.
+`min_words` turns that into a filter:
+
+```python
+res = client.search("how does raft consensus work", min_words=120)
+```
+
+Use it when the user wants something to READ. Leave it off for breaking news, where a
+two-line wire story is a legitimate answer.
+
 ## Install
 
 ```bash

@@ -47,6 +47,15 @@ class SearchResult:
     duplicate_count: int = 0
     #: Full text. Present only when the request set ``include_content``.
     content: Optional[str] = None
+    #: Body length in words. Always returned, and it is what makes ``min_words``
+    #: self-evident: you can SEE that a hit is a 40-word stub before reading it.
+    word_count: Optional[int] = None
+    #: Hero image URL, present only when the request set ``include_images``.
+    #: ``None`` is normal - not every page has one - so always check before use.
+    image: Optional[str] = None
+    #: Hero image dimensions in pixels, when the crawler recorded them.
+    image_w: Optional[int] = None
+    image_h: Optional[int] = None
     raw: Dict[str, Any] = field(default_factory=dict, repr=False)
 
     @classmethod
@@ -66,8 +75,25 @@ class SearchResult:
             duplicate_count=_as_int(d.get("duplicate_count")) or 0,
             # only present when include_content was requested
             content=d.get("content"),
+            word_count=_as_int(d.get("word_count")),
+            # only populated when include_images was requested
+            image=d.get("image"),
+            image_w=_as_int(d.get("image_w")),
+            image_h=_as_int(d.get("image_h")),
             raw=d,
         )
+
+
+@dataclass
+class Topic:
+    """One entry in the topic vocabulary from ``Blopus.topics()``."""
+
+    topic: str = ""
+    documents: int = 0
+
+    @classmethod
+    def from_dict(cls, d: Dict[str, Any]) -> "Topic":
+        return cls(topic=d.get("topic") or "", documents=_as_int(d.get("documents")) or 0)
 
 
 @dataclass

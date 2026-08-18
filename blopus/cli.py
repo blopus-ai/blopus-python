@@ -181,6 +181,10 @@ def _cmd_search(args: argparse.Namespace) -> int:
         recency=args.recency,
         include_content=args.include_content,
         content_chars=args.content_chars,
+        min_words=args.min_words,
+        include_images=args.include_images,
+        topics=_csv(args.topics),
+        exclude_topics=_csv(args.exclude_topics),
     )
     if args.json:
         print(json.dumps(res.raw, indent=2, ensure_ascii=False))
@@ -194,9 +198,26 @@ def _cmd_search(args: argparse.Namespace) -> int:
                 print(f"   {r.content}")
             elif r.snippet:
                 print(f"   {r.snippet}")
+            # Only when asked for AND actually present -- partial coverage is normal.
+            if r.image:
+                dims = f" ({r.image_w}x{r.image_h})" if r.image_w and r.image_h else ""
+                print(f"   image: {r.image}{dims}")
             print()
         if res.remaining_quota is not None:
             print(f"[remaining quota: {res.remaining_quota}]", file=sys.stderr)
+    return 0
+
+
+def _cmd_topics(args: argparse.Namespace) -> int:
+    client = Blopus(api_key=args.api_key, base_url=args.base_url)
+    items = client.topics(min_docs=args.min_docs)
+    if args.json:
+        print(json.dumps([{"topic": t.topic, "documents": t.documents} for t in items],
+                         indent=2, ensure_ascii=False))
+    else:
+        for t in items:
+            print(f"{t.documents:>12,}  {t.topic}")
+        print(f"\n[{len(items)} topics with >= {args.min_docs:,} documents]", file=sys.stderr)
     return 0
 
 
@@ -320,8 +341,33 @@ def build_parser() -> argparse.ArgumentParser:
                         "the search, so it beats fetching each result separately.")
     s.add_argument("--content-chars", type=int, default=None, metavar="N",
                    help="Cap inline content length per result.")
+    s.add_argument("--min-words", type=int, default=None, metavar="N",
+                   help="Only return pages with at least N words. Use 120 when you want "
+                        "something to READ - it drops tag listings and stub pages. Leave "
+                        "off for breaking news, where a two-line wire story is a real answer.")
+    s.add_argument("--topics", default=None, metavar="LIST",
+                   help="Only results from publications covering these topics "
+                        "(comma-separated). A topic is what a PUBLICATION covers, not what "
+                        "an article is about. Values are exact: an unknown topic returns "
+                        "NOTHING rather than widening the search. Run `blopus topics`, or "
+                        "browse https://blopus.ai/docs/topics")
+    s.add_argument("--exclude-topics", default=None, metavar="LIST",
+                   help="Drop results from publications covering these topics.")
+    s.add_argument("--include-images", action="store_true",
+                   help="Include a hero image URL per result. Off by default; coverage is "
+                        "partial, so some results will have no image.")
     s.add_argument("--json", action="store_true", help="Emit raw JSON instead of text.")
     s.set_defaults(func=_cmd_search)
+
+    tp = sub.add_parser(
+        "topics", help="List valid values for --topics / --exclude-topics.",
+        parents=[common],
+        description="The topic vocabulary. A topic describes what a PUBLICATION covers, "
+                    "not what an individual article is about. Free to call.")
+    tp.add_argument("--min-docs", type=int, default=1000, metavar="N",
+                    help="Hide topics with fewer than N documents (default 1000).")
+    tp.add_argument("--json", action="store_true", help="Emit raw JSON instead of text.")
+    tp.set_defaults(func=_cmd_topics)
 
     f = sub.add_parser(
         "fetch", help="Fetch indexed content for one or more URLs.",
