@@ -7,6 +7,33 @@ and agents.
 The SDK talks to exactly two data-plane endpoints: `POST /v1/search` and
 `POST /v1/fetch` on `https://api.blopus.ai`.
 
+
+### Images
+
+Ask for a hero image URL per result:
+
+```python
+res = client.search("tesla factory", include_images=True)
+for r in res.results:
+    if r.image:                      # None is normal — coverage is partial
+        print(r.title, r.image, f"{r.image_w}x{r.image_h}")
+```
+
+Off by default because it costs roughly 295 tokens per 10 results. Never promise a user a
+picture before you have a non-null URL in hand.
+
+### Filtering out stubs
+
+Every result carries `word_count`, so you can see that a hit is a stub before reading it.
+`min_words` turns that into a filter:
+
+```python
+res = client.search("how does raft consensus work", min_words=120)
+```
+
+Use it when the user wants something to READ. Leave it off for breaking news, where a
+two-line wire story is a legitimate answer.
+
 ## Install
 
 ```bash

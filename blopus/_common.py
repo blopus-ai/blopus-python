@@ -111,6 +111,7 @@ def build_search_body(
     excerpt_chars: Optional[int] = None,
     news_only: bool = False,
     min_words: int | None = None,
+    include_images: bool = False,
     recency: Optional[str] = None,
     include_content: bool = False,
     content_chars: Optional[int] = None,
@@ -152,6 +153,11 @@ def build_search_body(
         # under 120 words - tag listings, stubs, photo captions - and they rank on
         # keywords without saying anything.
         body["min_words"] = int(min_words)
+    if include_images:
+        # Hero image URL per result. OFF by default because it costs roughly 295
+        # tokens per 10 results, which matters when the caller is an LLM. Coverage is
+        # partial, so `image` is None on plenty of hits - treat that as normal.
+        body["include_images"] = True
     return body
 
 

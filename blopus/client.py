@@ -106,6 +106,7 @@ class Blopus:
         excerpt_chars: Optional[int] = None,
         news_only: bool = False,
         min_words: Optional[int] = None,
+        include_images: bool = False,
         recency: Optional[str] = None,
         include_content: bool = False,
         content_chars: Optional[int] = None,
@@ -115,6 +116,15 @@ class Blopus:
         Set ``min_words=120`` when you want something to READ - analysis, background,
         a comparison. It drops tag listings and stub pages, which are keyword bait.
         Leave it off for breaking news, where a two-line wire story is a real answer.
+
+        Set ``include_images=True`` to get a hero image URL on each result. It is off
+        by default because it costs roughly 295 tokens per 10 results, which matters
+        when the caller is a language model. Coverage is partial, so ``result.image``
+        is ``None`` on plenty of hits - check it before you use it, and never promise
+        a picture you do not already have a URL for.
+
+        Every result carries ``word_count`` whether or not you filter on it, so you
+        can tell a 40-word stub from a real article before reading it.
 
         Set ``news_only=True`` when the question is about events — what happened,
         who announced what, market reaction, election results, earnings news. It
@@ -141,6 +151,7 @@ class Blopus:
             excerpt_chars=excerpt_chars,
             news_only=news_only,
             min_words=min_words,
+            include_images=include_images,
             recency=recency,
             include_content=include_content,
             content_chars=content_chars,

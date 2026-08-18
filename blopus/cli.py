@@ -181,6 +181,8 @@ def _cmd_search(args: argparse.Namespace) -> int:
         recency=args.recency,
         include_content=args.include_content,
         content_chars=args.content_chars,
+        min_words=args.min_words,
+        include_images=args.include_images,
     )
     if args.json:
         print(json.dumps(res.raw, indent=2, ensure_ascii=False))
@@ -194,6 +196,10 @@ def _cmd_search(args: argparse.Namespace) -> int:
                 print(f"   {r.content}")
             elif r.snippet:
                 print(f"   {r.snippet}")
+            # Only when asked for AND actually present -- partial coverage is normal.
+            if r.image:
+                dims = f" ({r.image_w}x{r.image_h})" if r.image_w and r.image_h else ""
+                print(f"   image: {r.image}{dims}")
             print()
         if res.remaining_quota is not None:
             print(f"[remaining quota: {res.remaining_quota}]", file=sys.stderr)
@@ -320,6 +326,13 @@ def build_parser() -> argparse.ArgumentParser:
                         "the search, so it beats fetching each result separately.")
     s.add_argument("--content-chars", type=int, default=None, metavar="N",
                    help="Cap inline content length per result.")
+    s.add_argument("--min-words", type=int, default=None, metavar="N",
+                   help="Only return pages with at least N words. Use 120 when you want "
+                        "something to READ - it drops tag listings and stub pages. Leave "
+                        "off for breaking news, where a two-line wire story is a real answer.")
+    s.add_argument("--include-images", action="store_true",
+                   help="Include a hero image URL per result. Off by default; coverage is "
+                        "partial, so some results will have no image.")
     s.add_argument("--json", action="store_true", help="Emit raw JSON instead of text.")
     s.set_defaults(func=_cmd_search)
 
